@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+    <Button
+        android:id="@+id/left"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="我在左边"/>
+    <Button
+        android:id="@+id/right"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_toRightOf="@+id/left"
+        android:text="我在右边"/>
+    <ImageView
+        android:id="@+id/im"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_below="@+id/right"
+        android:src="@mipmap/ic_launcher"
+        />
+
+    <TextView
+        android:id="@+id/Phone"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:autoLink="email|phone"
+        android:layout_below="@+id/im"
+        android:text="这是对邮件和电话的链接:1234567@qq.com,我在图片的下方"
+        />
+    <TextView
+        android:id="@+id/bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:shadowColor="#00f"
+        android:shadowDx="10.0"
+        android:shadowDy="8.0"
+        android:shadowRadius="3.0"
+        android:textColor="#f00"
+        android:textSize="22sp"
+        android:layout_alignParentBottom="true"
+        android:text="这是带阴影的文字,在布局的bottom"
+        />
+
+</RelativeLayout>
