@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity;
 
 import android.annotation.SuppressLint;
 import android.content.ContentResolver;
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.os.Bundle;
 import android.view.View;
@@ -73,38 +74,57 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_add:
-                addData();
+//                addData();//SQLite
+                addDataCp();//ContentProvider
                 break;
             case R.id.btn_delete:
-                deleteData();
+//                deleteData();//SQLite
+                deleteDataCp();//ContentProvider
                 break;
             case R.id.btn_update:
-                updateData();
+//                updateData();//SQLite
+                updateDataCp();//ContentProvider
                 break;
             case R.id.btn_query:
-                queryData();
-//                queryDataCp();
+//                queryData();//SQLite
+                queryDataCp();//ContentProvider
                 break;
 
         }
     }
 
     private void queryDataCp() {
-        long id = Integer.parseInt(tvId.getText().toString());
-        Cursor cursor = resolver.query(StudentProvider.CONTENT_URI,
-                new String[]{StudentProvider.KEY_ID, StudentProvider.KEY_NAME, StudentProvider.KEY_GENDER, StudentProvider.KEY_AGE},
-                StudentProvider.KEY_ID + "=" + id, null, null);
-        List<Student> studentList= convertToStudent(cursor);
-        tvQueryResult.setText(studentList.get(0).toString());
+        /**
+         * 使用ContentProvider
+         * */
+        try {
+            long id = Integer.parseInt(tvId.getText().toString());
+            Cursor cursor = resolver.query(StudentProvider.CONTENT_URI,
+                    new String[]{StudentProvider.KEY_ID, StudentProvider.KEY_NAME, StudentProvider.KEY_GENDER, StudentProvider.KEY_AGE},
+                    StudentProvider.KEY_ID + "=" + id, null, null);
+            List<Student> studentList = convertToStudent(cursor);
+            tvQueryResult.setText(studentList.get(0).toString());
+            Toast.makeText(this, "查询成功", Toast.LENGTH_SHORT).show();
+        } catch (NumberFormatException e) {
+            Toast.makeText(this, "id格式错误", Toast.LENGTH_SHORT).show();
+            e.printStackTrace();
+        } catch (NullPointerException b) {
+            tvQueryResult.setText("无信息");
+            Toast.makeText(this, "无信息", Toast.LENGTH_SHORT).show();
+        }
+        clearEditText();
+
     }
 
     private void queryData() {
+        /**
+         * 使用SQLite
+         * */
         try {
             long id = Integer.parseInt(tvId.getText().toString());
             List<Student> studentList = dbAdapter.getOneData(id);
             tvQueryResult.setText(studentList.get(0).toString());
             Toast.makeText(this, "查询成功", Toast.LENGTH_SHORT).show();
-
         } catch (NumberFormatException a) {
             Toast.makeText(this, "id格式错误", Toast.LENGTH_SHORT).show();
         } catch (NullPointerException b) {
@@ -114,7 +134,37 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         clearEditText();
     }
 
+    private void updateDataCp() {
+        /**
+         * 使用ContentProvider
+         * */
+        try {
+            int id = Integer.parseInt(tvId.getText().toString());
+            List<Student> studentList = dbAdapter.getOneData(id);
+            String name = tvName.getText().toString().equals("") ? studentList.get(0).name : tvName.getText().toString();
+            String gender = tvGender.getText().toString().equals("") ? studentList.get(0).gender : tvGender.getText().toString();
+            int age = tvAge.getText().toString().equals("") ? studentList.get(0).age : Integer.parseInt(tvAge.getText().toString());
+            Student student = new Student(id, name, gender, age);
+            ContentValues values = new ContentValues();
+            values.put(StudentProvider.KEY_ID, id);
+            values.put(StudentProvider.KEY_NAME, name);
+            values.put(StudentProvider.KEY_GENDER, gender);
+            values.put(StudentProvider.KEY_AGE, age);
+            int count = resolver.update(StudentProvider.CONTENT_URI, values, StudentProvider.KEY_ID + "=" + id, null);
+            refreshShow();
+            Toast.makeText(this, "更新成功", Toast.LENGTH_SHORT).show();
+            tvQueryResult.setText(student.toString());
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+            Toast.makeText(this, "id格式错误", Toast.LENGTH_SHORT).show();
+        }
+        clearEditText();
+    }
+
     private void updateData() {
+        /**
+         * 使用SQLite
+         * */
         try {
             int id = Integer.parseInt(tvId.getText().toString());
             List<Student> studentList = dbAdapter.getOneData(id);
@@ -133,7 +183,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         clearEditText();
     }
 
+    private void deleteDataCp() {
+        /**
+         * 使用ContentProvider
+         * */
+        try {
+            long id = Integer.parseInt(tvId.getText().toString());
+            int count = resolver.delete(StudentProvider.CONTENT_URI,StudentProvider.KEY_ID+"="+id,null);
+            if (count > 0) {
+                Toast.makeText(this, "删除成功", Toast.LENGTH_SHORT).show();
+                refreshShow();
+            } else {
+                Toast.makeText(this, "删除失败", Toast.LENGTH_SHORT).show();
+            }
+        } catch (NumberFormatException a) {
+            Toast.makeText(this, "id格式错误", Toast.LENGTH_SHORT).show();
+        }
+        clearEditText();
+    }
+
     private void deleteData() {
+        /**
+         * 使用SQLite
+         * */
         try {
             long id = Integer.parseInt(tvId.getText().toString());
             long resultCode = dbAdapter.deleteOneData(id);
@@ -149,7 +221,29 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         clearEditText();
     }
 
+    private void addDataCp() {
+        /**
+         * 使用ContentProvider
+         * */
+        Student student = getInfo();
+        ContentValues values = new ContentValues();
+        values.put(StudentProvider.KEY_ID, student.id);
+        values.put(StudentProvider.KEY_NAME, student.name);
+        values.put(StudentProvider.KEY_GENDER, student.gender);
+        values.put(StudentProvider.KEY_AGE, student.age);
+        if (student != null && resolver.insert(StudentProvider.CONTENT_URI, values) != null) {
+            refreshShow();
+            Toast.makeText(this, "成功添加数据", Toast.LENGTH_SHORT).show();
+            clearEditText();
+        } else {
+            Toast.makeText(this, "添加数据失败", Toast.LENGTH_SHORT).show();
+        }
+    }
+
     private void addData() {
+        /**
+         * 使用SQLite
+         * */
         Student student = getInfo();
         if (student != null && dbAdapter.insert(student) != -1) {
             refreshShow();
@@ -192,11 +286,11 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     }
 
     @SuppressLint("Range")
-    public List<Student> convertToStudent(Cursor cursor){
+    public List<Student> convertToStudent(Cursor cursor) {
         int count = cursor.getCount();
-        if(count == 0 || !cursor.moveToFirst()) return null;
+        if (count == 0 || !cursor.moveToFirst()) return null;
         List<Student> studentList = new ArrayList<>();
-        for(int i = 0; i<count; i++){
+        for (int i = 0; i < count; i++) {
             Student student = new Student();
             student.id = cursor.getInt(0);
             student.name = cursor.getString(cursor.getColumnIndex(StudentProvider.KEY_NAME));
